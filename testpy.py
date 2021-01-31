@@ -10,6 +10,7 @@ import numpy as np
 import cv2 
 from matplotlib.image import imread
 import shutil
+import PIL
 
 #Définition des constante de base de la vidéo
 
@@ -20,10 +21,10 @@ nombreImage = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
 def separationImages(fichier):
-    if os.path.exists("video.mp4"):
-        os.remove("video.mp4")
-    if os.path.exists("videofin.mp4"):
-        os.remove("videofin.mp4")
+    if os.path.exists("video2.mp4"):
+        os.remove("video2.mp4")
+    if os.path.exists("videofin2.mp4"):
+        os.remove("videofin2.mp4")
     if(len(os.listdir('ImageCompresse')) !=0):
         for f in os.listdir('ImageCompresse'):
             os.remove(os.path.join('ImageCompresse', f))
@@ -57,6 +58,7 @@ def compression():
         arrayImage = 0
         for i in range(0, nombreImage):
             frame = imread('./dossierImage/image' +str(i)+ ".jpg")
+            height,width,layers = frame.shape
             listImage.append(frame)
             b,g,r = cv2.split(frame)  # Séparation des matrices de couleurs
             colorList.append(b)
@@ -71,13 +73,14 @@ def compression():
                 atLow = Bt*ind # On enlève des coefficients
                 aLow = np.fft.ifft2(atLow).real # transformee inverse
                 colorList[j] = aLow;
-            arrayImage = np.dstack((colorList[0],colorList[1],colorList[2])) # Fusion des matrices couleurs pour reconstituer l'image
+            arrayImage = np.dstack((colorList[2],colorList[1],colorList[0])) # Fusion des matrices couleurs pour reconstituer l'image
+            arrayImage = cv2.resize(arrayImage, (width, height), interpolation = cv2.INTER_NEAREST)
             cv2.imwrite("ImageCompresse"+ str(i)+ ".jpg", arrayImage) # création de l'image
             shutil.move("ImageCompresse"+ str(i)+ ".jpg","./ImageCompresse")
             colorList.clear()
             arrayImage = 0;
-        height,width,layers = listImage[1].shape
-        video = cv2.VideoWriter('video.mp4',cv2.VideoWriter_fourcc(*'MP4V'),25,(width, height))
+       # height,width,layers = listImage[1].shape
+        video = cv2.VideoWriter('video2.mp4',cv2.VideoWriter_fourcc(*'MP4V'),25,(width, height))
         for j in range(nombreImage):
             image = cv2.imread('./ImageCompresse/ImageCompresse' +str(j)+ ".jpg")
             listComp.append(image)
@@ -85,7 +88,7 @@ def compression():
             video.write(listComp[j])
         video.release()
         cv2.destroyAllWindows()
-        os.system("ffmpeg -i video.mp4 -vcodec  h264 -crf 28 videofin.mp4") # encodage de la video
+        os.system("ffmpeg -i video2.mp4 -vcodec  h264 -crf 28 videofin2.mp4") # encodage de la video
  
     # Il faut telehrger la bibliothèque ffmpeg pour lancer cette dernière commande, la bibliothèque existe sur tous les systèmes d'éxploitation
 
